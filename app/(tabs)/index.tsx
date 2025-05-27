@@ -136,7 +136,7 @@ export default function HomeScreen() {
         animationType="slide"
         transparent={true}
         onRequestClose={handleCloseModal}
-        presentationStyle="overFullScreen"
+        statusBarTranslucent={true}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
