@@ -14,6 +14,8 @@ export interface User {
   username: string;
   password: string;
   createdAt?: number;
+  budgetLimit?: number;
+  notificationsEnabled?: boolean;
 }
 
 export interface Expense {
@@ -33,7 +35,9 @@ export const userApi = {
   }),
   getUser: (userId: string) => api.get(`/users/${userId}`,{
     validateStatus: (status) => status >= 200 && status < 300 || status === 404
-  })
+  }),
+  updateUser: (userId: string, userData: Partial<User>) => 
+    api.put(`/users/${userId}`, userData)
 };
 
 export const expenseApi = {

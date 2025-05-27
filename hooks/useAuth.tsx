@@ -16,6 +16,7 @@ interface AuthContextType {
   signIn: (username: string, password: string) => Promise<void>;
   signUp: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,7 +25,8 @@ const AuthContext = createContext<AuthContextType>({
   error: null,
   signIn: async () => {},
   signUp: async () => {},
-  signOut: async () => {}
+  signOut: async () => {},
+  updateUser: async () => {}
 });
 
 // Provider component
@@ -43,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Handle routing based on auth state
   useEffect(() => {
     const inAuthGroup = segments[0] === 'auth';
-    
+
     if (!isLoading) {
       if (!user && !inAuthGroup) {
         // Redirect to login if no user
@@ -115,7 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userData: User = {
       username,
       password: hashedPassword,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      budgetLimit: 0,
+      notificationsEnabled: true
     };
 
     const { data: newUser } = await userApi.register(userData);
@@ -135,13 +139,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Sign out
   const signOut = async () => {
     setIsLoading(true);
-    
+
     try {
       await removeUserFromStorage();
       setUser(null);
       router.replace('/auth/login');
     } catch (error) {
       console.error('Sign out error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Update user
+  const updateUser = async (userData: Partial<User>) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const { data: updatedUser } = await userApi.updateUser(user.id, userData);
+
+      // Update local storage and state
+      const newUser = { ...user, ...updatedUser };
+      await saveUserToStorage(newUser);
+      setUser(newUser);
+    } catch (error: any) {
+      setError(error.message || 'Failed to update user');
+      console.error('Update user error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -155,7 +183,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         signIn,
         signUp,
-        signOut
+        signOut,
+        updateUser
       }}
     >
       {children}

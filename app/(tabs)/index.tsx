@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,8 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Modal
+  Modal,
+  Alert
 } from 'react-native';
 import Card from '@/components/common/Card';
 import ExpenseList from '@/components/expenses/ExpenseList';
@@ -22,8 +23,27 @@ export default function HomeScreen() {
   const { expenses = [], isLoading, addExpense, updateExpense, deleteExpense } = useExpenses();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [notificationShown, setNotificationShown] = useState(false);
 
   const totalExpenses = calculateTotal(expenses ?? []);
+
+  // Check if expenses are approaching budget limit
+  useEffect(() => {
+    if (
+      user?.budgetLimit && 
+      user.budgetLimit > 0 &&
+      user.notificationsEnabled && 
+      totalExpenses > user.budgetLimit * 0.8 && 
+      !notificationShown
+    ) {
+      const percentUsed = Math.round((totalExpenses / user.budgetLimit) * 100);
+      Alert.alert(
+        'Budget Alert',
+        `You've used ${percentUsed}% of your monthly budget limit. Consider reducing your expenses.`,
+        [{ text: 'OK', onPress: () => setNotificationShown(true) }]
+      );
+    }
+  }, [totalExpenses, user, notificationShown]);
 
   const handleAddExpense = () => {
     setEditingExpense(null);
@@ -84,6 +104,35 @@ export default function HomeScreen() {
             <Text style={styles.balanceAmount}>
               {formatCurrency(totalExpenses)}
             </Text>
+
+            {user?.budgetLimit && user.budgetLimit > 0 ? (
+              <View style={styles.budgetContainer}>
+                <View style={styles.budgetInfo}>
+                  <Text style={styles.budgetText}>
+                    Budget: {formatCurrency(user.budgetLimit)}
+                  </Text>
+                  <Text style={[
+                    styles.percentageText,
+                    totalExpenses > user.budgetLimit ? styles.overBudget : 
+                    totalExpenses > user.budgetLimit * 0.8 ? styles.nearBudget : 
+                    styles.underBudget
+                  ]}>
+                    {Math.round((totalExpenses / user.budgetLimit) * 100)}%
+                  </Text>
+                </View>
+                <View style={styles.progressBarContainer}>
+                  <View 
+                    style={[
+                      styles.progressBar,
+                      totalExpenses > user.budgetLimit ? styles.progressBarOver : 
+                      totalExpenses > user.budgetLimit * 0.8 ? styles.progressBarWarning : 
+                      styles.progressBarNormal,
+                      { width: `${Math.min(100, Math.round((totalExpenses / user.budgetLimit) * 100))}%` }
+                    ]} 
+                  />
+                </View>
+              </View>
+            ) : null}
           </Card>
 
           <View style={styles.statsRow}>
@@ -215,6 +264,52 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#333',
+    marginBottom: 16,
+  },
+  budgetContainer: {
+    marginTop: 8,
+  },
+  budgetInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  budgetText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  percentageText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  underBudget: {
+    color: '#34C759',
+  },
+  nearBudget: {
+    color: '#FF9500',
+  },
+  overBudget: {
+    color: '#FF3B30',
+  },
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  progressBarNormal: {
+    backgroundColor: '#34C759',
+  },
+  progressBarWarning: {
+    backgroundColor: '#FF9500',
+  },
+  progressBarOver: {
+    backgroundColor: '#FF3B30',
   },
   statsRow: {
     flexDirection: 'row',
@@ -261,7 +356,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 32,
-    paddingBottom: 48, // Increased bottom padding significantly
+    paddingBottom: 64, // Further increased bottom padding
     paddingHorizontal: 20,
     maxHeight: '90%',
     minHeight: 500,

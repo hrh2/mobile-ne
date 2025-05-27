@@ -45,21 +45,21 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!title.trim()) {
       newErrors.title = 'Title is required';
     }
-    
+
     if (!description.trim()) {
       newErrors.description = 'Description is required';
     }
-    
+
     if (!amount.trim()) {
       newErrors.amount = 'Amount is required';
     } else if (isNaN(Number(amount)) || Number(amount) <= 0) {
       newErrors.amount = 'Amount must be a positive number';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -89,7 +89,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
         onChangeText={setTitle}
         error={errors.title}
       />
-      
+
       <Input
         label="Description"
         placeholder="Expense Description"
@@ -98,7 +98,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
         error={errors.description}
         multiline
       />
-      
+
       <Input
         label="Amount"
         placeholder="0.00"
@@ -107,7 +107,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
         keyboardType="numeric"
         error={errors.amount}
       />
-      
+
       <View style={styles.categoryContainer}>
         <Text style={styles.label}>Category</Text>
         <TouchableOpacity
@@ -119,7 +119,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
           </Text>
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.buttonContainer}>
         {onCancel && (
           <Button
@@ -154,7 +154,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
                 <X size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.categoryList}>
               {expenseCategories.map((cat) => (
                 <TouchableOpacity
@@ -190,6 +190,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    paddingBottom: 32, // Increased bottom padding
   },
   categoryContainer: {
     marginBottom: 16,
