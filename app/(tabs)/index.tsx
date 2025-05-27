@@ -19,7 +19,7 @@ import { Expense } from '@/utils/api';
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { expenses = [], isLoading, addExpense, updateExpense, deleteExpense } = useExpenses(); // default to empty array
+  const { expenses = [], isLoading, addExpense, updateExpense, deleteExpense } = useExpenses();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
@@ -36,16 +36,26 @@ export default function HomeScreen() {
   };
 
   const handleSubmitExpense = async (data: Omit<Expense, 'id' | 'createdAt' | 'ownerid'>) => {
-    if (editingExpense) {
-      await updateExpense(editingExpense.id!, data);
-    } else {
-      await addExpense(data);
+    try {
+      if (editingExpense) {
+        await updateExpense(editingExpense.id!, data);
+      } else {
+        await addExpense(data);
+      }
+      setIsModalVisible(false);
+      setEditingExpense(null);
+    } catch (error) {
+      console.error('Error submitting expense:', error);
     }
-    setIsModalVisible(false);
   };
 
   const handleDeleteExpense = async (id: string) => {
     await deleteExpense(id);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalVisible(false);
+    setEditingExpense(null);
   };
 
   return (
@@ -125,6 +135,8 @@ export default function HomeScreen() {
         visible={isModalVisible}
         animationType="slide"
         transparent={true}
+        onRequestClose={handleCloseModal}
+        presentationStyle="overFullScreen"
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -133,7 +145,7 @@ export default function HomeScreen() {
                 {editingExpense ? 'Edit Expense' : 'Add Expense'}
               </Text>
               <TouchableOpacity
-                onPress={() => setIsModalVisible(false)}
+                onPress={handleCloseModal}
                 style={styles.closeButton}
               >
                 <X size={24} color="#333" />
@@ -144,7 +156,7 @@ export default function HomeScreen() {
               onSubmit={handleSubmitExpense}
               isLoading={isLoading}
               initialData={editingExpense || undefined}
-              onCancel={() => setIsModalVisible(false)}
+              onCancel={handleCloseModal}
             />
           </View>
         </View>
@@ -248,16 +260,27 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    maxHeight: '80%',
+    paddingTop: 32,
+    paddingBottom: 48, // Increased bottom padding significantly
+    paddingHorizontal: 20,
+    maxHeight: '90%',
+    minHeight: 500,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -5,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 24, // Increased from 16 to 24 for more space below header
     paddingHorizontal: 8,
+    paddingBottom: 8, // Add bottom padding to header
   },
   modalTitle: {
     fontSize: 20,
